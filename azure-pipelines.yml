@@ -11,7 +11,8 @@ stages:
   - job: 'Build'
     displayName: 'Build job'
     pool:
-      vmImage: 'ubuntu-18.04'
+      # vmImage: 'ubuntu-18.04'
+      name: 'MyWindows'
       demands:
       - npm
 
@@ -33,8 +34,8 @@ stages:
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
       displayName: 'Compile Sass assets'
 
-    - task: gulp@1
-      displayName: 'Run gulp tasks'
+    # - task: gulp@1
+    #   displayName: 'Run gulp tasks'
 
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
@@ -71,7 +72,8 @@ stages:
   jobs:
   - deployment: Deploy
     pool:
-      vmImage: 'ubuntu-18.04'
+      # vmImage: 'ubuntu-18.04'
+      name: 'MyWindows'
     environment: spike
     variables:
     - group: Release
@@ -88,3 +90,12 @@ stages:
               appName: '$(WebAppName)'
               appType: webAppLinux
               package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/Tailspin.SpaceGame.Web.zip'
+          - task: AzureFunctionApp@1
+            displayName: 'Azure Function Deploy: leaderboard'
+            inputs:
+              azureSubscription: 'Resource Manager - Tailspin - Space Game'
+              appType: functionAppLinux
+              appName: '$(LeaderboardAppName)'
+              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/Tailspin.SpaceGame.LeaderboardFunction.zip'
+              runtimeStack: DOCKER|microsoft/azure-functions-dotnet-core3.0:3.0
+              startUpCommand: 'func azure functionapp publish $(functionAppName) --no-bundler'
